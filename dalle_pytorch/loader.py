@@ -8,15 +8,16 @@ from torchvision import transforms as T
 
 
 class TextImageDataset(Dataset):
-    def __init__(self,
-                 folder,
-                 text_len=256,
-                 image_size=128,
-                 truncate_captions=False,
-                 resize_ratio=0.75,
-                 tokenizer=None,
-                 shuffle=False
-                 ):
+    def __init__(
+        self,
+        folder,
+        text_len=128,
+        image_size=256,
+        truncate_captions=False,
+        resize_ratio=0.75,
+        tokenizer=None,
+        shuffle=False,
+    ):
         """
         @param folder: Folder containing images and text files matched by their paths' respective "stem"
         @param truncate_captions: Rather than throw an exception, captions which are too long will be truncated.
@@ -25,16 +26,18 @@ class TextImageDataset(Dataset):
         self.shuffle = shuffle
         path = Path(folder)
 
-        text_files = [*path.glob('**/*.txt')]
+        text_files = [*path.glob("**/*.txt")]
         image_files = [
-            *path.glob('**/*.png'), *path.glob('**/*.jpg'),
-            *path.glob('**/*.jpeg'), *path.glob('**/*.bmp')
+            *path.glob("**/*.png"),
+            *path.glob("**/*.jpg"),
+            *path.glob("**/*.jpeg"),
+            *path.glob("**/*.bmp"),
         ]
 
         text_files = {text_file.stem: text_file for text_file in text_files}
         image_files = {image_file.stem: image_file for image_file in image_files}
 
-        keys = (image_files.keys() & text_files.keys())
+        keys = image_files.keys() & text_files.keys()
 
         self.keys = list(keys)
         self.text_files = {k: v for k, v in text_files.items() if k in keys}
@@ -43,14 +46,13 @@ class TextImageDataset(Dataset):
         self.truncate_captions = truncate_captions
         self.resize_ratio = resize_ratio
         self.tokenizer = tokenizer
-        self.image_transform = T.Compose([
-            T.Lambda(lambda img: img.convert('RGB')
-            if img.mode != 'RGB' else img),
-            T.RandomResizedCrop(image_size,
-                                scale=(self.resize_ratio, 1.),
-                                ratio=(1., 1.)),
-            T.ToTensor()
-        ])
+        self.image_transform = T.Compose(
+            [
+                T.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),
+                T.RandomResizedCrop(image_size, scale=(self.resize_ratio, 1.0), ratio=(1.0, 1.0)),
+                T.ToTensor(),
+            ]
+        )
 
     def __len__(self):
         return len(self.keys)
@@ -74,7 +76,7 @@ class TextImageDataset(Dataset):
         text_file = self.text_files[key]
         image_file = self.image_files[key]
 
-        descriptions = text_file.read_text().split('\n')
+        descriptions = text_file.read_text().split("\n")
         descriptions = list(filter(lambda t: len(t) > 0, descriptions))
         try:
             description = choice(descriptions)
@@ -84,9 +86,7 @@ class TextImageDataset(Dataset):
             return self.skip_sample(ind)
 
         tokenized_text = self.tokenizer.tokenize(
-            description,
-            self.text_len,
-            truncate_text=self.truncate_captions
+            description, self.text_len, truncate_text=self.truncate_captions
         ).squeeze(0)
         try:
             image_tensor = self.image_transform(PIL.Image.open(image_file))
