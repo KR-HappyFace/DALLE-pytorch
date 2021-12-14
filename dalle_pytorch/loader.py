@@ -10,7 +10,8 @@ from torchvision import transforms as T
 class TextImageDataset(Dataset):
     def __init__(
         self,
-        folder,
+        text_folder="/opt/ml/DALLE-Couture/data/caption",
+        image_folder="/opt/ml/DALLE-Couture/data/cropped_img",
         text_len=128,
         image_size=256,
         truncate_captions=False,
@@ -26,12 +27,14 @@ class TextImageDataset(Dataset):
         self.shuffle = shuffle
         path = Path(folder)
 
-        text_files = [*path.glob("**/*.txt")]
+        text_path = Path(text_folder)
+        text_files = [*text_path.glob("**/*.txt")]
+
+        image_path = Path(image_folder)
         image_files = [
-            *path.glob("**/*.png"),
-            *path.glob("**/*.jpg"),
-            *path.glob("**/*.jpeg"),
-            *path.glob("**/*.bmp"),
+            *image_path.glob("**/*.png"),
+            *image_path.glob("**/*.jpg"),
+            *image_path.glob("**/*.jpeg"),
         ]
 
         text_files = {text_file.stem: text_file for text_file in text_files}
@@ -49,6 +52,7 @@ class TextImageDataset(Dataset):
         self.image_transform = T.Compose(
             [
                 T.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),
+                # TODO: remove random resized crop while resolving RuntimeError: stack expects each tensor to be equal size, but got [3, 364, 237] at entry 0 and [3, 534, 535] at entry 1
                 T.RandomResizedCrop(image_size, scale=(self.resize_ratio, 1.0), ratio=(1.0, 1.0)),
                 T.ToTensor(),
             ]

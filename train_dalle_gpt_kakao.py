@@ -114,7 +114,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--wandb_entity", default="happyface-boostcamp", help="(optional) Name of W&B team/entity to log to."
+    "--wandb_entity",
+    default="happyface-boostcamp",
+    help="(optional) Name of W&B team/entity to log to.",
 )
 
 parser.add_argument(
@@ -435,7 +437,8 @@ if ENABLE_WEBDATASET:
     )
 else:
     ds = TextImageDataset(
-        args.image_text_folder,
+        text_folder="/opt/ml/DALLE-Couture/data/caption",
+        image_folder="/opt/ml/DALLE-Couture/data/cropped_img",
         text_len=TEXT_SEQ_LEN,
         image_size=IMAGE_SIZE,
         resize_ratio=args.resize_ratio,
