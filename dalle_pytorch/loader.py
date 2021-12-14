@@ -25,7 +25,7 @@ class TextImageDataset(Dataset):
         """
         super().__init__()
         self.shuffle = shuffle
-        path = Path(folder)
+        #path = Path(folder)
 
         text_path = Path(text_folder)
         text_files = [*text_path.glob("**/*.txt")]
