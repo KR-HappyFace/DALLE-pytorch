@@ -42,14 +42,14 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default="/opt/ml/taming-transformers/pretrained_models/ggangtong.ckpt",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-11-34_custom_vqgan/checkpoints/last.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default="/opt/ml/taming-transformers/pretrained_models/ggangtong.yml",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-11-34_custom_vqgan/configs/2021-12-13T16-11-34-project.yaml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 
@@ -166,7 +166,7 @@ model_group = parser.add_argument_group("Model settings")
 
 # model_group.add_argument('--dim', default = 512, type = int, help = 'Model dimension')
 
-model_group.add_argument("--text_seq_len", default=256, type=int, help="Text sequence length")
+model_group.add_argument("--text_seq_len", default=128, type=int, help="Text sequence length")
 
 model_group.add_argument("--depth", default=2, type=int, help="Model depth")
 
@@ -334,43 +334,13 @@ if RESUME:
     opt_state = loaded_obj.get("opt_state")
     scheduler_state = loaded_obj.get("scheduler_state")
 
-    if vae_params is not None:
-        vae = DiscreteVAE(**vae_params)
-    else:
-        if args.taming:
-            vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
-        else:
-            vae = OpenAIDiscreteVAE()
+    vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
 
     dalle_params = dict(**dalle_params)
     IMAGE_SIZE = vae.image_size
     resume_epoch = loaded_obj.get("epoch", 0)
 else:
-    if exists(VAE_PATH):
-        vae_path = Path(VAE_PATH)
-        assert vae_path.exists(), "VAE model file does not exist"
-        assert not vae_path.is_dir(), (
-            "Cannot load VAE model from directory; please use a "
-            "standard *.pt checkpoint. "
-            "Currently, merging a DeepSpeed-partitioned VAE into a DALLE "
-            "model is not supported."
-        )
-
-        loaded_obj = torch.load(str(vae_path))
-
-        vae_params, weights = loaded_obj["hparams"], loaded_obj["weights"]
-
-        vae = DiscreteVAE(**vae_params)
-        vae.load_state_dict(weights)
-    else:
-        if distr_backend.is_root_worker():
-            print("using pretrained VAE for encoding images to tokens")
-        vae_params = None
-
-        if args.taming:
-            vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
-        else:
-            vae = OpenAIDiscreteVAE()
+    vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
 
     IMAGE_SIZE = vae.image_size
 
@@ -606,7 +576,7 @@ if RESUME and using_deepspeed:
 def save_model(path, epoch=0):
     save_obj = {
         "hparams": dalle_params,
-        "vae_params": vae_params,
+        "vae_params": None,
         "epoch": epoch,
     }
     if using_deepspeed:
