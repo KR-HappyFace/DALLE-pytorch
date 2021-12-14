@@ -57,7 +57,7 @@ parser.add_argument(
 parser.add_argument(
     "--image_text_folder",
     type=str,
-    default="/opt/ml/DALLE-Couture/data/cropped_img_selected",
+    default="/opt/ml/DALLE-Couture/data/",
     # required=True,
     help="path to your folder of images and text for learning the DALL-E",
 )
@@ -680,7 +680,7 @@ for epoch in range(resume_epoch, EPOCHS):
                 if not avoid_model_calls:
                     log["image"] = wandb.Image(image, caption=decoded_text)
 
-        if i % 10 == 9 and distr_backend.is_root_worker():
+        if i % 100 == 99 and distr_backend.is_root_worker():
             sample_per_sec = BATCH_SIZE * 10 / (time.time() - t)
             log["sample_per_sec"] = sample_per_sec
             print(epoch, i, f"sample_per_sec - {sample_per_sec}")
