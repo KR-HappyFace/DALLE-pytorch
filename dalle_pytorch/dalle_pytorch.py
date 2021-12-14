@@ -675,7 +675,7 @@ class DALLE_gpt_kakao(nn.Module):
         sandwich_norm=False,
         shift_tokens=True,
         rotary_emb=True,
-        wte_dir="./kakao_kogpt_wte.pt",
+        wte_dir="/opt/ml/DALLE-pytorch/kakao_kogpt_wte.pt",
     ):
         super().__init__()
         assert isinstance(
@@ -695,7 +695,9 @@ class DALLE_gpt_kakao(nn.Module):
         dim = self.text_emb.weight.shape[1]
         self.image_emb = nn.Embedding(num_image_tokens, dim)
 
-        self.text_pos_emb = nn.Embedding(text_seq_len + 1, dim) if not rotary_emb else always(0) # +1 for <bos>
+        #self.text_pos_emb = (
+        #    nn.Embedding(text_seq_len + 1, dim) if not rotary_emb else always(0)
+        #)  # +1 for <bos>
         self.image_pos_emb = (
             AxialPositionalEmbedding(dim, axial_shape=(image_fmap_size, image_fmap_size))
             if not rotary_emb
@@ -773,7 +775,7 @@ class DALLE_gpt_kakao(nn.Module):
             device = text_tokens.device
 
             tokens = self.text_emb(text_tokens)
-            tokens += self.text_pos_emb(torch.arange(text_tokens.shape[1], device = device))
+            #tokens += self.text_pos_emb(torch.arange(text_tokens.shape[1], device=device))
 
             seq_len = tokens.shape[1]
 
@@ -895,7 +897,7 @@ class DALLE_gpt_kakao(nn.Module):
         text = F.pad(text, (1, 0), value=0)
 
         tokens = self.text_emb(text)
-        tokens += self.text_pos_emb(torch.arange(text.shape[1], device = device))
+        #tokens += self.text_pos_emb(torch.arange(text.shape[1], device=device))
 
         seq_len = tokens.shape[1]
 
@@ -994,7 +996,6 @@ class DALLE_gpt_trinity(nn.Module):
         assert isinstance(
             vae, (DiscreteVAE, OpenAIDiscreteVAE, VQGanVAE)
         ), "vae must be an instance of DiscreteVAE"
-
         image_size = vae.image_size
         num_image_tokens = vae.num_tokens
         image_fmap_size = vae.image_size // (2 ** vae.num_layers)
@@ -1007,7 +1008,7 @@ class DALLE_gpt_trinity(nn.Module):
         self.text_emb = torch.load(wte_dir)
         dim = self.text_emb.weight.shape[1]
         self.image_emb = nn.Embedding(num_image_tokens, dim)
-
+        #print(dim,image_fmap_size,image_fmap_size)
         self.text_pos_emb = torch.load(wpe_dir) if not rotary_emb else always(0)  # +1 for <bos>
         self.image_pos_emb = (
             AxialPositionalEmbedding(dim, axial_shape=(image_fmap_size, image_fmap_size))
@@ -1224,10 +1225,10 @@ class DALLE_gpt_trinity(nn.Module):
                 ), f"invalid image of dimensions {image.shape} passed in during training"
 
                 image = self.vae.get_codebook_indices(image)
-
+            #print(image.shape)
             image_len = image.shape[1]
             image_emb = self.image_emb(image)
-
+            #print(image_emb.shape)
             image_emb += self.image_pos_emb(image_emb)
 
             tokens = torch.cat((tokens, image_emb), dim=1)

@@ -139,7 +139,7 @@ class SimpleTokenizer(object):
             bpe_tokens.extend(self.encoder[bpe_token] for bpe_token in self.bpe(token).split(" "))
         return bpe_tokens
 
-    def decode(self, tokens, remove_start_end=True, pad_tokens={}):
+    def decode(self, tokens, remove_start_end=True, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
@@ -162,12 +162,8 @@ class SimpleTokenizer(object):
 
         for i, tokens in enumerate(all_tokens):
             if len(tokens) > context_length:
-                if truncate_text:
-                    tokens = tokens[:context_length]
-                else:
-                    raise RuntimeError(
-                        f"Input {texts[i]} is too long for context length {context_length}"
-                    )
+                tokens = tokens[:context_length]
+                
             result[i, : len(tokens)] = torch.tensor(tokens)
 
         return result
@@ -187,7 +183,7 @@ class HugTokenizer:
         self.tokenizer = tokenizer
         self.vocab_size = tokenizer.get_vocab_size()
 
-    def decode(self, tokens, pad_tokens={}):
+    def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
         ignore_ids = pad_tokens.union({0})
@@ -206,12 +202,8 @@ class HugTokenizer:
         result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
         for i, tokens in enumerate(all_tokens):
             if len(tokens) > context_length:
-                if truncate_text:
-                    tokens = tokens[:context_length]
-                else:
-                    raise RuntimeError(
-                        f"Input {texts[i]} is too long for context length {context_length}"
-                    )
+                tokens = tokens[:context_length]
+                
             result[i, : len(tokens)] = torch.tensor(tokens)
 
         return result
@@ -222,11 +214,11 @@ class HugTokenizer:
 
 class KakaoTokenizer:
     def __init__(self):
-        tokenizer = AutoTokenizer.from_pretrained("kakaobrain/kogpt")
+        tokenizer = AutoTokenizer.from_pretrained("MrBananaHuman/kogpt_6b_fp16")
         self.tokenizer = tokenizer
         self.vocab_size = tokenizer.vocab_size
 
-    def decode(self, tokens, pad_tokens={}):
+    def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
@@ -248,12 +240,8 @@ class KakaoTokenizer:
         result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
         for i, tokens in enumerate(all_tokens):
             if len(tokens) > context_length:
-                if truncate_text:
-                    tokens = tokens[:context_length]
-                else:
-                    raise RuntimeError(
-                        f"Input {texts[i]} is too long for context length {context_length}"
-                    )
+                tokens = tokens[:context_length]
+                
             result[i, : len(tokens)] = torch.tensor(tokens)
 
         return result
@@ -271,7 +259,7 @@ class SKTTokenizer:
         )
         self.vocab_size = tokenizer.vocab_size
 
-    def decode(self, tokens, pad_tokens={}):
+    def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
@@ -311,7 +299,7 @@ class ChineseTokenizer:
         self.tokenizer = tokenizer
         self.vocab_size = tokenizer.vocab_size
 
-    def decode(self, tokens, pad_tokens={}):
+    def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
@@ -354,7 +342,7 @@ class YttmTokenizer:
         self.tokenizer = tokenizer
         self.vocab_size = tokenizer.vocab_size()
 
-    def decode(self, tokens, pad_tokens={}):
+    def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
@@ -373,12 +361,8 @@ class YttmTokenizer:
         result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
         for i, tokens in enumerate(all_tokens):
             if len(tokens) > context_length:
-                if truncate_text:
-                    tokens = tokens[:context_length]
-                else:
-                    raise RuntimeError(
-                        f"Input {texts[i]} is too long for context length {context_length}"
-                    )
+                tokens = tokens[:context_length]
+                
             result[i, : len(tokens)] = torch.tensor(tokens)
 
         return result

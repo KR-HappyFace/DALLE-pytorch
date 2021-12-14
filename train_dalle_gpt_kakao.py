@@ -16,12 +16,12 @@ from dalle_pytorch import (
     OpenAIDiscreteVAE,
     VQGanVAE,
     DiscreteVAE,
-    DALLE,
+    DALLE_gpt_trinity,
     DALLE_gpt_kakao,
 )
 from dalle_pytorch import distributed_utils
 from dalle_pytorch.loader import TextImageDataset
-from dalle_pytorch.tokenizer import *
+from dalle_pytorch.tokenizer import KakaoTokenizer
 
 # libraries needed for webdataset support
 import webdataset as wds
@@ -43,21 +43,22 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default=None,
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/ggangtong_vqgan.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default=None,
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/configs/ggangtong_vqgan.yaml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--image_text_folder",
     type=str,
-    required=True,
+    default="/opt/ml/DALLE-Couture/data/cropped_img_selected",
+    # required=True,
     help="path to your folder of images and text for learning the DALL-E",
 )
 
@@ -113,7 +114,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--wandb_entity", default=None, help="(optional) Name of W&B team/entity to log to."
+    "--wandb_entity", default="happyface-boostcamp", help="(optional) Name of W&B team/entity to log to."
 )
 
 parser.add_argument(
@@ -166,7 +167,7 @@ model_group = parser.add_argument_group("Model settings")
 
 # model_group.add_argument('--dim', default = 512, type = int, help = 'Model dimension')
 
-model_group.add_argument("--text_seq_len", default=256, type=int, help="Text sequence length")
+model_group.add_argument("--text_seq_len", default=128, type=int, help="Text sequence length")
 
 model_group.add_argument("--depth", default=2, type=int, help="Model depth")
 
@@ -313,7 +314,7 @@ using_deepspeed = distributed_utils.using_backend(distributed_utils.DeepSpeedBac
 # elif args.chinese:
 #     tokenizer = ChineseTokenizer()
 
-tokenizer = SKTTokenizer()
+tokenizer = KakaoTokenizer()
 
 # reconstitute vae
 if RESUME:
@@ -334,43 +335,13 @@ if RESUME:
     opt_state = loaded_obj.get("opt_state")
     scheduler_state = loaded_obj.get("scheduler_state")
 
-    if vae_params is not None:
-        vae = DiscreteVAE(**vae_params)
-    else:
-        if args.taming:
-            vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
-        else:
-            vae = OpenAIDiscreteVAE()
+    vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
 
     dalle_params = dict(**dalle_params)
     IMAGE_SIZE = vae.image_size
     resume_epoch = loaded_obj.get("epoch", 0)
 else:
-    if exists(VAE_PATH):
-        vae_path = Path(VAE_PATH)
-        assert vae_path.exists(), "VAE model file does not exist"
-        assert not vae_path.is_dir(), (
-            "Cannot load VAE model from directory; please use a "
-            "standard *.pt checkpoint. "
-            "Currently, merging a DeepSpeed-partitioned VAE into a DALLE "
-            "model is not supported."
-        )
-
-        loaded_obj = torch.load(str(vae_path))
-
-        vae_params, weights = loaded_obj["hparams"], loaded_obj["weights"]
-
-        vae = DiscreteVAE(**vae_params)
-        vae.load_state_dict(weights)
-    else:
-        if distr_backend.is_root_worker():
-            print("using pretrained VAE for encoding images to tokens")
-        vae_params = None
-
-        if args.taming:
-            vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
-        else:
-            vae = OpenAIDiscreteVAE()
+    vae = VQGanVAE(VQGAN_MODEL_PATH, VQGAN_CONFIG_PATH)
 
     IMAGE_SIZE = vae.image_size
 
@@ -606,7 +577,7 @@ if RESUME and using_deepspeed:
 def save_model(path, epoch=0):
     save_obj = {
         "hparams": dalle_params,
-        "vae_params": vae_params,
+        "vae_params": None,
         "epoch": epoch,
     }
     if using_deepspeed:
@@ -683,7 +654,7 @@ for epoch in range(resume_epoch, EPOCHS):
 
         log = {}
 
-        if i % 10 == 0 and distr_backend.is_root_worker():
+        if i % 100 == 0 and distr_backend.is_root_worker():
             print(epoch, i, f"loss - {avg_loss.item()}")
 
             log = {**log, "epoch": epoch, "iter": i, "loss": avg_loss.item()}
@@ -691,7 +662,7 @@ for epoch in range(resume_epoch, EPOCHS):
         if i % SAVE_EVERY_N_STEPS == 0:
             save_model(DALLE_OUTPUT_FILE_NAME, epoch=epoch)
 
-        if i % 100 == 0:
+        if i % 200 == 0:
             if distr_backend.is_root_worker():
                 sample_text = text[:1]
                 token_list = sample_text.masked_select(sample_text != 0).tolist()
