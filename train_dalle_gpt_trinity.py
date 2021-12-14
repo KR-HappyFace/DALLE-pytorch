@@ -20,7 +20,7 @@ from dalle_pytorch import (
 )
 from dalle_pytorch import distributed_utils
 from dalle_pytorch.loader import TextImageDataset
-from dalle_pytorch.tokenizer import tokenizer, HugTokenizer, ChineseTokenizer, YttmTokenizer
+from dalle_pytorch.tokenizer import SKTTokenizer
 
 # libraries needed for webdataset support
 import webdataset as wds
@@ -42,21 +42,22 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default=None,
+    default="/opt/ml/taming-transformers/pretrained_models/ggangtong.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default=None,
+    default="/opt/ml/taming-transformers/pretrained_models/ggangtong.yml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--image_text_folder",
     type=str,
-    required=True,
+    default="/opt/ml/DALLE-Couture/data/cropped_img_selected",
+    # required=True,
     help="path to your folder of images and text for learning the DALL-E",
 )
 
@@ -306,11 +307,13 @@ using_deepspeed = distributed_utils.using_backend(distributed_utils.DeepSpeedBac
 
 # tokenizer
 
-if exists(args.bpe_path):
-    klass = HugTokenizer if args.hug else YttmTokenizer
-    tokenizer = klass(args.bpe_path)
-elif args.chinese:
-    tokenizer = ChineseTokenizer()
+# if exists(args.bpe_path):
+#     klass = HugTokenizer if args.hug else YttmTokenizer
+#     tokenizer = klass(args.bpe_path)
+# elif args.chinese:
+#     tokenizer = ChineseTokenizer()
+
+tokenizer = SKTTokenizer()
 
 # reconstitute vae
 if RESUME:

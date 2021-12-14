@@ -21,7 +21,7 @@ from dalle_pytorch import (
 )
 from dalle_pytorch import distributed_utils
 from dalle_pytorch.loader import TextImageDataset
-from dalle_pytorch.tokenizer import tokenizer, HugTokenizer, ChineseTokenizer, YttmTokenizer
+from dalle_pytorch.tokenizer import *
 
 # libraries needed for webdataset support
 import webdataset as wds
@@ -307,11 +307,13 @@ using_deepspeed = distributed_utils.using_backend(distributed_utils.DeepSpeedBac
 
 # tokenizer
 
-if exists(args.bpe_path):
-    klass = HugTokenizer if args.hug else YttmTokenizer
-    tokenizer = klass(args.bpe_path)
-elif args.chinese:
-    tokenizer = ChineseTokenizer()
+# if exists(args.bpe_path):
+#     klass = HugTokenizer if args.hug else YttmTokenizer
+#     tokenizer = klass(args.bpe_path)
+# elif args.chinese:
+#     tokenizer = ChineseTokenizer()
+
+tokenizer = SKTTokenizer()
 
 # reconstitute vae
 if RESUME:
