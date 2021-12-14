@@ -42,14 +42,14 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-11-34_custom_vqgan/checkpoints/last.ckpt",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/last.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-11-34_custom_vqgan/configs/2021-12-13T16-11-34-project.yaml",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/configs/2021-12-13T16-23-29-project.yaml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 

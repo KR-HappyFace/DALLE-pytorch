@@ -674,7 +674,7 @@ class DALLE_gpt_kakao(nn.Module):
         stable=False,
         sandwich_norm=False,
         shift_tokens=True,
-        rotary_emb=False,
+        rotary_emb=True,
         wte_dir="./kakao_kogpt_wte.pt",
     ):
         super().__init__()
@@ -695,7 +695,7 @@ class DALLE_gpt_kakao(nn.Module):
         dim = self.text_emb.weight.shape[1]
         self.image_emb = nn.Embedding(num_image_tokens, dim)
 
-        # self.text_pos_emb = nn.Embedding(text_seq_len + 1, dim) if not rotary_emb else always(0) # +1 for <bos>
+        self.text_pos_emb = nn.Embedding(text_seq_len + 1, dim) if not rotary_emb else always(0) # +1 for <bos>
         self.image_pos_emb = (
             AxialPositionalEmbedding(dim, axial_shape=(image_fmap_size, image_fmap_size))
             if not rotary_emb
@@ -773,7 +773,7 @@ class DALLE_gpt_kakao(nn.Module):
             device = text_tokens.device
 
             tokens = self.text_emb(text_tokens)
-            # tokens += self.text_pos_emb(torch.arange(text_tokens.shape[1], device = device))
+            tokens += self.text_pos_emb(torch.arange(text_tokens.shape[1], device = device))
 
             seq_len = tokens.shape[1]
 
@@ -895,7 +895,7 @@ class DALLE_gpt_kakao(nn.Module):
         text = F.pad(text, (1, 0), value=0)
 
         tokens = self.text_emb(text)
-        # tokens += self.text_pos_emb(torch.arange(text.shape[1], device = device))
+        tokens += self.text_pos_emb(torch.arange(text.shape[1], device = device))
 
         seq_len = tokens.shape[1]
 
