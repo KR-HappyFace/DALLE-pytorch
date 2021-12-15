@@ -20,7 +20,7 @@ from dalle_pytorch import (
 )
 from dalle_pytorch import distributed_utils
 from dalle_pytorch.loader import TextImageDataset
-from dalle_pytorch.tokenizer import SKTTokenizer
+from dalle_pytorch.tokenizer import *
 
 # libraries needed for webdataset support
 import webdataset as wds
@@ -313,7 +313,7 @@ using_deepspeed = distributed_utils.using_backend(distributed_utils.DeepSpeedBac
 # elif args.chinese:
 #     tokenizer = ChineseTokenizer()
 
-tokenizer = SKTTokenizer()
+tokenizer = RobertaTokenizer()
 
 # reconstitute vae
 if RESUME:
@@ -473,7 +473,7 @@ else:
 
 # initialize DALL-E
 
-dalle = DALLE_gpt_trinity(vae=vae, **dalle_params)
+dalle = DALLE_gpt_trinity(vae=vae,wpe_dir="/opt/ml/DALLE-pytorch/roberta_large_wpe.pt",wte_dir="/opt/ml/DALLE-pytorch/roberta_large_wte.pt",**dalle_params)
 if not using_deepspeed:
     if args.fp16:
         dalle = dalle.half()

@@ -169,7 +169,7 @@ class SimpleTokenizer(object):
         return result
 
 
-tokenizer = SimpleTokenizer()
+#tokenizer = SimpleTokenizer()
 
 # huggingface tokenizer
 
@@ -246,6 +246,39 @@ class KakaoTokenizer:
 
         return result
 
+class RobertaTokenizer:
+    def __init__(self):
+        self.tokenizer = AutoTokenizer.from_pretrained("klue/roberta-large")
+        #self.tokenizer = tokenizer
+        self.vocab_size = self.tokenizer.vocab_size
+
+    def decode(self, tokens, pad_tokens=set()):
+        if torch.is_tensor(tokens):
+            tokens = tokens.tolist()
+
+        ignore_ids = pad_tokens.union(
+            {self.tokenizer.pad_token_id}
+        )  #  https://huggingface.co/MrBananaHuman/kogpt_6b_fp16/raw/main/tokenizer.json
+        tokens = [token for token in tokens if token not in ignore_ids]
+        return self.tokenizer.decode(tokens)
+
+    def encode(self, text):
+        return torch.tensor(self.tokenizer.encode(text, add_special_tokens=False))
+
+    def tokenize(self, texts, context_length=128, truncate_text=True):
+        if isinstance(texts, str):
+            texts = [texts]
+
+        all_tokens = [self.encode(text) for text in texts]
+
+        result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
+        for i, tokens in enumerate(all_tokens):
+            if len(tokens) > context_length:
+                tokens = tokens[:context_length]
+                
+            result[i, : len(tokens)] = torch.tensor(tokens)
+
+        return result
 
 class SKTTokenizer:
     def __init__(self):
@@ -257,7 +290,8 @@ class SKTTokenizer:
             pad_token="<pad>",
             mask_token="<mask>",
         )
-        self.vocab_size = tokenizer.vocab_size
+        self.vocab_size = self.tokenizer.vocab_size
+        print("vocab_size :",self.vocab_size)
 
     def decode(self, tokens, pad_tokens=set()):
         if torch.is_tensor(tokens):

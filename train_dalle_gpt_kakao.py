@@ -446,6 +446,7 @@ else:
         tokenizer=tokenizer,
         shuffle=is_shuffle,
     )
+    print('length of datasets',len(ds))
     assert len(ds) > 0, "dataset is empty"
 
 if distr_backend.is_root_worker():

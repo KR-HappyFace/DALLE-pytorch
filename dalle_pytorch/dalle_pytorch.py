@@ -1008,7 +1008,7 @@ class DALLE_gpt_trinity(nn.Module):
         self.text_emb = torch.load(wte_dir)
         dim = self.text_emb.weight.shape[1]
         self.image_emb = nn.Embedding(num_image_tokens, dim)
-        #print(dim,image_fmap_size,image_fmap_size)
+        print(dim,image_fmap_size,image_fmap_size)
         self.text_pos_emb = torch.load(wpe_dir) if not rotary_emb else always(0)  # +1 for <bos>
         self.image_pos_emb = (
             AxialPositionalEmbedding(dim, axial_shape=(image_fmap_size, image_fmap_size))
@@ -1205,9 +1205,13 @@ class DALLE_gpt_trinity(nn.Module):
         text = torch.where(text == 0, text_range, text)
 
         # add <bos>
-
+        #print(text.shape)
+        #print(text)
+        print(torch.max(text))
         text = F.pad(text, (1, 0), value=0)
-
+        #print(text.shape)
+        #print(text)
+        print(torch.max(text))
         tokens = self.text_emb(text)
         tokens += self.text_pos_emb(torch.arange(text.shape[1], device=device))
 
