@@ -4,7 +4,7 @@ import time
 from glob import glob
 import os
 import shutil
-
+from tqdm import tqdm
 import torch
 import wandb  # Quit early if user doesn't have wandb installed.
 from torch.nn.utils import clip_grad_norm_
@@ -42,14 +42,14 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/ggangtong_vqgan.ckpt",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/ggangtong_vqgan_best.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/configs/ggangtong_vqgan.yaml",
+    default="/opt/ml/taming-transformers/configs/ggangtong_vqgan_best.yaml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 
@@ -434,8 +434,8 @@ if ENABLE_WEBDATASET:
     )
 else:
     ds = TextImageDataset(
-        text_folder="/opt/ml/DALLE-Couture/data/caption",
-        image_folder="/opt/ml/DALLE-Couture/data/cropped_img",
+        text_folder="/opt/ml/DALLE-Couture/data/train_label",
+        image_folder="/opt/ml/DALLE-Couture/data/cropped_train_img",
         text_len=TEXT_SEQ_LEN,
         image_size=IMAGE_SIZE,
         resize_ratio=args.resize_ratio,
@@ -473,7 +473,12 @@ else:
 
 # initialize DALL-E
 
-dalle = DALLE_gpt_trinity(vae=vae,wpe_dir="/opt/ml/DALLE-pytorch/roberta_large_wpe.pt",wte_dir="/opt/ml/DALLE-pytorch/roberta_large_wte.pt",**dalle_params)
+dalle = DALLE_gpt_trinity(
+    vae=vae,
+    wpe_dir="/opt/ml/DALLE-pytorch/roberta_large_wpe.pt",
+    wte_dir="/opt/ml/DALLE-pytorch/roberta_large_wte.pt",
+    **dalle_params,
+)
 if not using_deepspeed:
     if args.fp16:
         dalle = dalle.half()
@@ -630,7 +635,7 @@ save_model(DALLE_OUTPUT_FILE_NAME, epoch=resume_epoch)
 for epoch in range(resume_epoch, EPOCHS):
     if data_sampler:
         data_sampler.set_epoch(epoch)
-    for i, (text, images) in enumerate((dl if ENABLE_WEBDATASET else distr_dl)):
+    for i, (text, images) in enumerate(tqdm(dl if ENABLE_WEBDATASET else distr_dl)):
         if i % 10 == 0 and distr_backend.is_root_worker():
             t = time.time()
         if args.fp16:

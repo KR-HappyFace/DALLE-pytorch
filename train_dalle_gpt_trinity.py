@@ -42,14 +42,14 @@ group.add_argument("--dalle_path", type=str, help="path to your partially traine
 parser.add_argument(
     "--vqgan_model_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/ggangtong_vqgan.ckpt",
+    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/checkpoints/ggangtong_vqgan_best.ckpt",
     help="path to your trained VQGAN weights. This should be a .ckpt file. (only valid when taming option is enabled)",
 )
 
 parser.add_argument(
     "--vqgan_config_path",
     type=str,
-    default="/opt/ml/taming-transformers/logs/2021-12-13T16-23-29_custom_vqgan/configs/ggangtong_vqgan.yaml",
+    default="/opt/ml/taming-transformers/configs/ggangtong_vqgan_best.yaml",
     help="path to your trained VQGAN config. This should be a .yaml file. (only valid when taming option is enabled)",
 )
 
@@ -229,7 +229,7 @@ VAE_PATH = args.vae_path
 VQGAN_MODEL_PATH = args.vqgan_model_path
 VQGAN_CONFIG_PATH = args.vqgan_config_path
 DALLE_PATH = args.dalle_path
-RESUME = exists(DALLE_PATH)
+RESUME = False  # exists(DALLE_PATH)
 
 EPOCHS = args.epochs
 BATCH_SIZE = args.batch_size
@@ -434,8 +434,8 @@ if ENABLE_WEBDATASET:
     )
 else:
     ds = TextImageDataset(
-        text_folder="/opt/ml/DALLE-Couture/data/caption",
-        image_folder="/opt/ml/DALLE-Couture/data/cropped_img",
+        text_folder="/opt/ml/DALLE-Couture/data/train_label",
+        image_folder="/opt/ml/DALLE-Couture/data/cropped_train_img",
         text_len=TEXT_SEQ_LEN,
         image_size=IMAGE_SIZE,
         resize_ratio=args.resize_ratio,
@@ -623,7 +623,6 @@ def save_model(path, epoch=0):
 
 
 # training
-
 # Saves a checkpoint before training begins to fail early when mis-configured.
 # See https://github.com/lucidrains/DALLE-pytorch/wiki/DeepSpeed-Checkpoints
 save_model(DALLE_OUTPUT_FILE_NAME, epoch=resume_epoch)

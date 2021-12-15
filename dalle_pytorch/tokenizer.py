@@ -223,7 +223,7 @@ class KakaoTokenizer:
             tokens = tokens.tolist()
 
         ignore_ids = pad_tokens.union(
-            {self.tokenizer.pad_token_id}
+            {0}
         )  #  https://huggingface.co/MrBananaHuman/kogpt_6b_fp16/raw/main/tokenizer.json
         tokens = [token for token in tokens if token not in ignore_ids]
         return self.tokenizer.decode(tokens)
@@ -257,7 +257,7 @@ class RobertaTokenizer:
             tokens = tokens.tolist()
 
         ignore_ids = pad_tokens.union(
-            {self.tokenizer.pad_token_id}
+            {0}
         )  #  https://huggingface.co/MrBananaHuman/kogpt_6b_fp16/raw/main/tokenizer.json
         tokens = [token for token in tokens if token not in ignore_ids]
         return self.tokenizer.decode(tokens)
@@ -297,7 +297,7 @@ class SKTTokenizer:
         if torch.is_tensor(tokens):
             tokens = tokens.tolist()
 
-        ignore_ids = pad_tokens.union({self.tokenizer.pad_token_id})
+        ignore_ids = pad_tokens.union({0})
         tokens = [token for token in tokens if token not in ignore_ids]
         return self.tokenizer.decode(tokens)
 
@@ -323,80 +323,3 @@ class SKTTokenizer:
 
         return result
 
-
-# chinese tokenizer
-
-
-class ChineseTokenizer:
-    def __init__(self):
-        tokenizer = BertTokenizer.from_pretrained("bert-base-chinese")
-        self.tokenizer = tokenizer
-        self.vocab_size = tokenizer.vocab_size
-
-    def decode(self, tokens, pad_tokens=set()):
-        if torch.is_tensor(tokens):
-            tokens = tokens.tolist()
-
-        ignore_ids = pad_tokens.union({0})
-        tokens = [token for token in tokens if token not in ignore_ids]
-        return self.tokenizer.decode(tokens)
-
-    def encode(self, text):
-        return torch.tensor(self.tokenizer.encode(text, add_special_tokens=False))
-
-    def tokenize(self, texts, context_length=256, truncate_text=False):
-        if isinstance(texts, str):
-            texts = [texts]
-
-        all_tokens = [self.encode(text) for text in texts]
-
-        result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
-        for i, tokens in enumerate(all_tokens):
-            if len(tokens) > context_length:
-                if truncate_text:
-                    tokens = tokens[:context_length]
-                else:
-                    raise RuntimeError(
-                        f"Input {texts[i]} is too long for context length {context_length}"
-                    )
-            result[i, : len(tokens)] = torch.tensor(tokens)
-
-        return result
-
-
-# yttm tokenizer
-
-
-class YttmTokenizer:
-    def __init__(self, bpe_path=None):
-        bpe_path = Path(bpe_path)
-        assert bpe_path.exists(), f"BPE json path {str(bpe_path)} does not exist"
-
-        tokenizer = yttm.BPE(model=str(bpe_path))
-        self.tokenizer = tokenizer
-        self.vocab_size = tokenizer.vocab_size()
-
-    def decode(self, tokens, pad_tokens=set()):
-        if torch.is_tensor(tokens):
-            tokens = tokens.tolist()
-
-        return self.tokenizer.decode(tokens, ignore_ids=pad_tokens.union({0}))
-
-    def encode(self, texts):
-        encoded = self.tokenizer.encode(texts, output_type=yttm.OutputType.ID)
-        return list(map(torch.tensor, encoded))
-
-    def tokenize(self, texts, context_length=256, truncate_text=False):
-        if isinstance(texts, str):
-            texts = [texts]
-
-        all_tokens = self.encode(texts)
-
-        result = torch.zeros(len(all_tokens), context_length, dtype=torch.long)
-        for i, tokens in enumerate(all_tokens):
-            if len(tokens) > context_length:
-                tokens = tokens[:context_length]
-                
-            result[i, : len(tokens)] = torch.tensor(tokens)
-
-        return result

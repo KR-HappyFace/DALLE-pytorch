@@ -569,10 +569,10 @@ class DALLE(nn.Module):
 
         # make sure padding in text tokens get unique padding token id
 
-        text_range = torch.arange(self.text_seq_len, device=device) + (
-            self.num_text_tokens - self.text_seq_len
-        )
-        text = torch.where(text == 0, text_range, text)
+        #text_range = torch.arange(self.text_seq_len, device=device) + (
+        #    self.num_text_tokens - self.text_seq_len
+        #)
+        #text = torch.where(text == 0, text_range, text)
 
         # add <bos>
 
@@ -687,9 +687,9 @@ class DALLE_gpt_kakao(nn.Module):
         image_fmap_size = vae.image_size // (2 ** vae.num_layers)
         image_seq_len = image_fmap_size ** 2
 
-        num_text_tokens = (
-            num_text_tokens + text_seq_len
-        )  # reserve unique padding tokens for each position (text seq len)
+        #num_text_tokens = (
+        #    num_text_tokens + text_seq_len
+        #)  # reserve unique padding tokens for each position (text seq len)
 
         self.text_emb = torch.load(wte_dir)  # Embedding(64512, 4096)
         dim = self.text_emb.weight.shape[1]
@@ -887,10 +887,10 @@ class DALLE_gpt_kakao(nn.Module):
 
         # make sure padding in text tokens get unique padding token id
 
-        text_range = torch.arange(self.text_seq_len, device=device) + (
-            self.num_text_tokens - self.text_seq_len
-        )
-        text = torch.where(text == 0, text_range, text)
+        #text_range = torch.arange(self.text_seq_len, device=device) + (
+        #    self.num_text_tokens - self.text_seq_len
+        #)
+        #text = torch.where(text == 0, text_range, text)
 
         # add <bos>
 
@@ -1199,19 +1199,22 @@ class DALLE_gpt_trinity(nn.Module):
 
         # make sure padding in text tokens get unique padding token id
 
-        text_range = torch.arange(self.text_seq_len, device=device) + (
-            self.num_text_tokens - self.text_seq_len
-        )
-        text = torch.where(text == 0, text_range, text)
+        #text_range = torch.arange(self.text_seq_len, device=device) + (
+        #    self.num_text_tokens - self.text_seq_len
+        #)
+        #print(torch.max(text))
+        #print(text)
+        #torch.save(text,'text.pt')
+        #text = torch.where(text == 3, text_range, text)
 
         # add <bos>
         #print(text.shape)
         #print(text)
-        print(torch.max(text))
+        #print(torch.max(text))
         text = F.pad(text, (1, 0), value=0)
         #print(text.shape)
         #print(text)
-        print(torch.max(text))
+        #print(torch.max(text))
         tokens = self.text_emb(text)
         tokens += self.text_pos_emb(torch.arange(text.shape[1], device=device))
 
@@ -1229,10 +1232,8 @@ class DALLE_gpt_trinity(nn.Module):
                 ), f"invalid image of dimensions {image.shape} passed in during training"
 
                 image = self.vae.get_codebook_indices(image)
-            #print(image.shape)
             image_len = image.shape[1]
             image_emb = self.image_emb(image)
-            #print(image_emb.shape)
             image_emb += self.image_pos_emb(image_emb)
 
             tokens = torch.cat((tokens, image_emb), dim=1)
