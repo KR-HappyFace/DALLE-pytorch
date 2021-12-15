@@ -5,6 +5,7 @@ from glob import glob
 import os
 import shutil
 
+from tqdm import tqdm
 import torch
 import wandb  # Quit early if user doesn't have wandb installed.
 from torch.nn.utils import clip_grad_norm_
@@ -629,7 +630,7 @@ save_model(DALLE_OUTPUT_FILE_NAME, epoch=resume_epoch)
 for epoch in range(resume_epoch, EPOCHS):
     if data_sampler:
         data_sampler.set_epoch(epoch)
-    for i, (text, images) in enumerate((dl if ENABLE_WEBDATASET else distr_dl)):
+    for i, (text, images) in enumerate(tqdm(dl if ENABLE_WEBDATASET else distr_dl)):
         if i % 10 == 0 and distr_backend.is_root_worker():
             t = time.time()
         if args.fp16:

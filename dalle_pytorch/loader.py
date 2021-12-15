@@ -53,7 +53,8 @@ class TextImageDataset(Dataset):
             [
                 T.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),
                 # TODO: remove random resized crop while resolving RuntimeError: stack expects each tensor to be equal size, but got [3, 364, 237] at entry 0 and [3, 534, 535] at entry 1
-                T.RandomResizedCrop(image_size, scale=(self.resize_ratio, 1.0), ratio=(1.0, 1.0)),
+                #T.RandomResizedCrop(image_size, scale=(self.resize_ratio, 1.0), ratio=(1.0, 1.0)),
+                T.Resize((image_size, image_size)),
                 T.ToTensor(),
             ]
         )
