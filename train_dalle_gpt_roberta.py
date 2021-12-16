@@ -37,7 +37,9 @@ group = parser.add_mutually_exclusive_group(required=False)
 
 group.add_argument("--vae_path", type=str, help="path to your trained discrete VAE")
 
-group.add_argument("--dalle_path", type=str, help="path to your partially trained DALL-E")
+group.add_argument(
+    "--dalle_path", type=str, help="path to your partially trained DALL-E"
+)
 
 parser.add_argument(
     "--vqgan_model_path",
@@ -91,7 +93,9 @@ parser.add_argument("--hug", dest="hug", action="store_true")
 
 parser.add_argument("--bpe_path", type=str, help="path to your BPE json file")
 
-parser.add_argument("--dalle_output_file_name", type=str, default="dalle", help="output_file_name")
+parser.add_argument(
+    "--dalle_output_file_name", type=str, default="dalle", help="output_file_name"
+)
 
 parser.add_argument(
     "--fp16",
@@ -113,7 +117,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--wandb_entity", default=None, help="(optional) Name of W&B team/entity to log to."
+    "--wandb_entity",
+    default="happyface-boostcamp",
+    help="(optional) Name of W&B team/entity to log to.",
 )
 
 parser.add_argument(
@@ -137,7 +143,10 @@ train_group.add_argument(
 train_group.add_argument("--epochs", default=20, type=int, help="Number of epochs")
 
 train_group.add_argument(
-    "--save_every_n_steps", default=1000, type=int, help="Save a checkpoint every n steps"
+    "--save_every_n_steps",
+    default=1000,
+    type=int,
+    help="Save a checkpoint every n steps",
 )
 
 train_group.add_argument(
@@ -156,9 +165,13 @@ train_group.add_argument(
     help="Number of steps to accumulate gradients across per each iteration. DeepSpeed only.",
 )
 
-train_group.add_argument("--learning_rate", default=3e-4, type=float, help="Learning rate")
+train_group.add_argument(
+    "--learning_rate", default=3e-4, type=float, help="Learning rate"
+)
 
-train_group.add_argument("--clip_grad_norm", default=0.5, type=float, help="Clip gradient norm")
+train_group.add_argument(
+    "--clip_grad_norm", default=0.5, type=float, help="Clip gradient norm"
+)
 
 train_group.add_argument("--lr_decay", dest="lr_decay", action="store_true")
 
@@ -166,21 +179,31 @@ model_group = parser.add_argument_group("Model settings")
 
 # model_group.add_argument('--dim', default = 512, type = int, help = 'Model dimension')
 
-model_group.add_argument("--text_seq_len", default=128, type=int, help="Text sequence length")
+model_group.add_argument(
+    "--text_seq_len", default=128, type=int, help="Text sequence length"
+)
 
 model_group.add_argument("--depth", default=2, type=int, help="Model depth")
 
 model_group.add_argument("--heads", default=8, type=int, help="Model number of heads")
 
-model_group.add_argument("--dim_head", default=64, type=int, help="Model head dimension")
+model_group.add_argument(
+    "--dim_head", default=64, type=int, help="Model head dimension"
+)
 
-train_group.add_argument("--ff_dropout", default=0.0, type=float, help="Feed forward dropout.")
+train_group.add_argument(
+    "--ff_dropout", default=0.0, type=float, help="Feed forward dropout."
+)
 
-train_group.add_argument("--attn_dropout", default=0.0, type=float, help="Feed forward dropout.")
+train_group.add_argument(
+    "--attn_dropout", default=0.0, type=float, help="Feed forward dropout."
+)
 
 model_group.add_argument("--reversible", dest="reversible", action="store_true")
 
-model_group.add_argument("--loss_img_weight", default=7, type=int, help="Image loss weight")
+model_group.add_argument(
+    "--loss_img_weight", default=7, type=int, help="Image loss weight"
+)
 
 model_group.add_argument(
     "--attn_types",
@@ -189,9 +212,13 @@ model_group.add_argument(
     help="comma separated list of attention types. attention type can be: full or sparse or axial_row or axial_col or conv_like.",
 )
 
-model_group.add_argument("--shift_tokens", help="Use the shift tokens feature", action="store_true")
+model_group.add_argument(
+    "--shift_tokens", help="Use the shift tokens feature", action="store_true"
+)
 
-model_group.add_argument("--rotary_emb", help="Use rotary embeddings", action="store_true")
+model_group.add_argument(
+    "--rotary_emb", help="Use rotary embeddings", action="store_true"
+)
 
 args = parser.parse_args()
 
@@ -266,7 +293,9 @@ else:
     # quit early if no tar files were found
     if Path(args.image_text_folder).is_dir():
         DATASET = [
-            str(p) for p in Path(args.image_text_folder).glob("**/*") if ".tar" in str(p).lower()
+            str(p)
+            for p in Path(args.image_text_folder).glob("**/*")
+            if ".tar" in str(p).lower()
         ]  # .name
         assert (
             len(DATASET) > 0
@@ -283,14 +312,24 @@ else:
     ):
         DATASET = f"pipe:curl -L -s {args.image_text_folder} || true"
         print(
-            "Found {} http(s) link under given path!".format(len(DATASET), args.image_text_folder)
+            "Found {} http(s) link under given path!".format(
+                len(DATASET), args.image_text_folder
+            )
         )
     elif "gs://" in args.image_text_folder.lower():
         DATASET = f"pipe:gsutil cat {args.image_text_folder} || true"
-        print("Found {} GCS link under given path!".format(len(DATASET), args.image_text_folder))
+        print(
+            "Found {} GCS link under given path!".format(
+                len(DATASET), args.image_text_folder
+            )
+        )
     elif ".tar" in args.image_text_folder:
         DATASET = args.image_text_folder
-        print("Found WebDataset .tar(.gz) file under given path {}!".format(args.image_text_folder))
+        print(
+            "Found WebDataset .tar(.gz) file under given path {}!".format(
+                args.image_text_folder
+            )
+        )
     else:
         raise Exception(
             "No folder, no .tar(.gz) and no url pointing to tar files provided under {}.".format(
@@ -392,7 +431,9 @@ is_shuffle = not distributed_utils.using_backend(distributed_utils.HorovodBacken
 imagepreproc = T.Compose(
     [
         T.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),
-        T.RandomResizedCrop(IMAGE_SIZE, scale=(args.resize_ratio, 1.0), ratio=(1.0, 1.0)),
+        T.RandomResizedCrop(
+            IMAGE_SIZE, scale=(args.resize_ratio, 1.0), ratio=(1.0, 1.0)
+        ),
         T.ToTensor(),
     ]
 )
@@ -467,7 +508,11 @@ if ENABLE_WEBDATASET:
 else:
     # Regular DataLoader for image-text-folder datasets
     dl = DataLoader(
-        ds, batch_size=BATCH_SIZE, shuffle=is_shuffle, drop_last=True, sampler=data_sampler
+        ds,
+        batch_size=BATCH_SIZE,
+        shuffle=is_shuffle,
+        drop_last=True,
+        sampler=data_sampler,
     )
 
 
@@ -589,7 +634,9 @@ def save_model(path, epoch=0):
         cp_dir = cp_path_to_dir(path, "ds")
 
         if KEEP_N_CHECKPOINTS is not None and distr_backend.is_root_worker():
-            checkpoints = sorted(glob(str(cp_dir / "global*")), key=os.path.getmtime, reverse=True)
+            checkpoints = sorted(
+                glob(str(cp_dir / "global*")), key=os.path.getmtime, reverse=True
+            )
             for checkpoint in checkpoints[KEEP_N_CHECKPOINTS:]:
                 shutil.rmtree(checkpoint)
 
@@ -691,7 +738,9 @@ for epoch in range(resume_epoch, EPOCHS):
             print(epoch, i, f"sample_per_sec - {sample_per_sec}")
 
         if i == 201 and args.flops_profiler:
-            raise StopIteration("Profiler has finished running. Stopping training early.")
+            raise StopIteration(
+                "Profiler has finished running. Stopping training early."
+            )
 
         if distr_backend.is_root_worker():
             wandb.log(log)
@@ -704,14 +753,18 @@ for epoch in range(resume_epoch, EPOCHS):
     if distr_backend.is_root_worker():
         # save trained model to wandb as an artifact every epoch's end
 
-        model_artifact = wandb.Artifact("trained-dalle", type="model", metadata=dict(model_config))
+        model_artifact = wandb.Artifact(
+            "trained-dalle", type="model", metadata=dict(model_config)
+        )
         model_artifact.add_file(DALLE_OUTPUT_FILE_NAME)
         run.log_artifact(model_artifact)
 
 save_model(DALLE_OUTPUT_FILE_NAME, epoch=epoch)
 if distr_backend.is_root_worker():
     wandb.save(DALLE_OUTPUT_FILE_NAME)
-    model_artifact = wandb.Artifact("trained-dalle", type="model", metadata=dict(model_config))
+    model_artifact = wandb.Artifact(
+        "trained-dalle", type="model", metadata=dict(model_config)
+    )
     model_artifact.add_file(DALLE_OUTPUT_FILE_NAME)
     run.log_artifact(model_artifact)
 
