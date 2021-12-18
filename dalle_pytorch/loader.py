@@ -5,19 +5,21 @@ import PIL
 
 from torch.utils.data import Dataset
 from torchvision import transforms as T
+from .preprocess import remove_style
 
 
 class TextImageDataset(Dataset):
     def __init__(
         self,
-        text_folder="/opt/ml/DALLE-Couture/data/caption",
-        image_folder="/opt/ml/DALLE-Couture/data/cropped_img",
+        text_folder="/opt/ml/DALLE-Couture/data",
+        image_folder="/opt/ml/DALLE-Couture/data",
         text_len=128,
         image_size=256,
         truncate_captions=False,
-        resize_ratio=0.75,
+        resize_ratio=1.0,
         tokenizer=None,
         shuffle=False,
+        remove_style=True,
     ):
         """
         @param folder: Folder containing images and text files matched by their paths' respective "stem"
@@ -25,16 +27,16 @@ class TextImageDataset(Dataset):
         """
         super().__init__()
         self.shuffle = shuffle
-        #path = Path(folder)
+        # path = Path(folder)
 
         text_path = Path(text_folder)
-        text_files = [*text_path.glob("**/*.txt")]
+        text_files = [*text_path.glob("**/**/*.txt")]
 
         image_path = Path(image_folder)
         image_files = [
-            *image_path.glob("**/*.png"),
-            *image_path.glob("**/*.jpg"),
-            *image_path.glob("**/*.jpeg"),
+            *image_path.glob("**/**/*.png"),
+            *image_path.glob("**/**/*.jpg"),
+            *image_path.glob("**/**/*.jpeg"),
         ]
 
         text_files = {text_file.stem: text_file for text_file in text_files}
@@ -52,8 +54,6 @@ class TextImageDataset(Dataset):
         self.image_transform = T.Compose(
             [
                 T.Lambda(lambda img: img.convert("RGB") if img.mode != "RGB" else img),
-                # TODO: remove random resized crop while resolving RuntimeError: stack expects each tensor to be equal size, but got [3, 364, 237] at entry 0 and [3, 534, 535] at entry 1
-                #T.RandomResizedCrop(image_size, scale=(self.resize_ratio, 1.0), ratio=(1.0, 1.0)),
                 T.Resize((image_size, image_size)),
                 T.ToTensor(),
             ]
@@ -81,7 +81,7 @@ class TextImageDataset(Dataset):
         text_file = self.text_files[key]
         image_file = self.image_files[key]
 
-        descriptions = text_file.read_text().split("\n")
+        descriptions = text_file.read_text(encoding="utf-8").split("\n")
         descriptions = list(filter(lambda t: len(t) > 0, descriptions))
         try:
             description = choice(descriptions)
@@ -90,6 +90,9 @@ class TextImageDataset(Dataset):
             print(f"Skipping index {ind}")
             return self.skip_sample(ind)
 
+        # ADD PREPROCESSING FUNCTION HERE
+        description = remove_style(description)
+        # tokenize
         tokenized_text = self.tokenizer.tokenize(
             description, self.text_len, truncate_text=self.truncate_captions
         ).squeeze(0)
